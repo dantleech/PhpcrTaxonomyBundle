@@ -1,6 +1,10 @@
 PHPCR Taxonomy Bundle
 =====================
 
+[![Build Status](https://secure.travis-ci.org/dantleech/PhpcrTaxonomyBundle.png)](http://travis-ci.org/symfony-cmf/MenuBundle)
+[![Latest Stable Version](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/version.png)](https://packagist.org/packages/symfony-cmf/menu-bundle)
+[![Total Downloads](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/d/total.png)](https://packagist.org/packages/symfony-cmf/menu-bundle)
+
 **NOTE::** This is a work in progress.
 
 This is a very specific taxonomy bundle for PHPCR.
@@ -37,11 +41,6 @@ class Post
      * @PhpcrTaxonomy\Taxons(path="/test/taxons")
      */
     public $tags;
-
-    /**
-     * @PhpcrTaxonomy\TaxonObjects()
-     */
-    public $tagObjects;
 }
 ````
 
@@ -49,7 +48,10 @@ Tags can be added as follows:
 
 ````php
 $post = new Post();
-$post->setTags(array('one', 'two'));
+$post->setTags(array(
+    new Taxon('one'),
+    new Taxon('two'),
+));
 ````
 
 The parent document for each tag is determined by the `path` property of the
