@@ -25,6 +25,10 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class TaxonomySubscriber implements EventSubscriber
 {
+    protected $inFlush = false;
+
+    protected $pendingDocuments = array();
+
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
@@ -34,7 +38,7 @@ class TaxonomySubscriber implements EventSubscriber
     {
         return array(
             Event::loadClassMetadata,
-            Event::onFlush,
+            Event::preFlush,
         );
     }
 
@@ -67,6 +71,7 @@ class TaxonomySubscriber implements EventSubscriber
                         'fieldName' => $propertyMetadata->name,
                         'type' => 'string',
                         'multivalue' => true,
+                        'nullable' => true,
                     ));
 
                     $taxonsProperty = $propertyMetadata;
@@ -91,12 +96,16 @@ class TaxonomySubscriber implements EventSubscriber
         }
     }
 
-    public function onFlush(ManagerEventArgs $args)
+    public function preFlush(ManagerEventArgs $args)
     {
-        /** @var $dm DocumentManager */
+        if ($this->inFlush) {
+            return;
+        }
+
         $dm = $args->getObjectManager();
         $uow = $dm->getUnitOfWork();
 
+        $uow->computeChangeSets();
         $scheduledInserts = $uow->getScheduledInserts();
         $scheduledUpdates = $uow->getScheduledUpdates();
         $updates = array_merge($scheduledInserts, $scheduledUpdates);
@@ -105,91 +114,77 @@ class TaxonomySubscriber implements EventSubscriber
             $realDocumentClass = ClassUtils::getRealClass(get_class($document));
             $taxMeta = $this->getTaxMeta($realDocumentClass);
 
-            if (null !== $taxMeta) {
+            if ($taxMeta->hasMetadata()) {
                 foreach ($taxMeta->getTaxonsFields() as $taxonField) {
+                    // yes, this is slightly bizzare ..
                     $taxonNames = $taxonField->getValue($document);
-
-                    foreach ($taxonNames as $taxonName) {
-                        $path = join('/', array($taxonField->getPath(), $taxonName));
-                        $taxon = $dm->find(null, $path);
-                        $taxonClass = $taxonField->getTaxonClass();
-
-                        // if no taxon, create one
-                        if (null === $taxon) {
-                            $parentPath = $taxonField->getPath();
-                            $parentDocument = $dm->find(null, $parentPath);
-
-                            if (null === $parentDocument) {
-                                throw new \InvalidArgumentException(sprintf(
-                                    'Parent path "%s" for taxon field "%s" in class "%s" does not exist.',
-                                    $parentPath, $taxonField->name, $realDocumentClass
-                                ));
-                            }
-
-                            $taxon = new $taxonClass();
-                            $taxon->setName($taxonName);
-                            $taxon->setParent($parentDocument);
-                        }
-
-                        // validate taxon class
-                        if (!$taxon instanceof $taxonClass) {
-                            throw new \RuntimeException(sprintf(
-                                'Expected taxon at path "%s" to be instance of "%s" but got an instance of "%s"',
-                                $path, $taxonClass, get_class($taxon)
-                            ));
-                        }
-
-                        // add taxon objects
-                        $taxonObjectsFields = $taxMeta->getTaxonObjectsFields();
-
-                        if (count($taxonObjectsFields) > 1) {
-                            throw new \InvalidArgumentException(
-                                'Multiple taxonomies for a single class not currently supported'
-                            );
-                        }
-
-                        // rather pointless loop given the above exception, but we want to support
-                        // this in the future probably.
-                        foreach ($taxonObjectsFields as $taxonObjectField) {
-                            $existingTaxons = $taxonObjectField->reflection->getValue($document);
-
-                            $hasTaxon = false;
-                            foreach ($existingTaxons as $existingTaxon) {
-                                if ($existingTaxon === $taxon) {
-                                    $hasTaxon = true;
-                                }
-                            }
-
-                            if (false === $hasTaxon) {
-                                $existingTaxons->add($taxon);
-                            }
-                        }
-
-                        $dm->persist($taxon);
-                    }
+                    $this->updateDocument($dm, $document, $taxonField, $taxonNames);
                 }
-
-                $dm->persist($document);
-                $uow->computeChangeSets();
             }
         }
 
-        //$removes = $uow->getScheduledRemovals();
+        // the only way I can find to get the document to have its associations updated..
+        $this->inFlush = true;
+        $dm->flush();
+        $this->inFlush = false;
+        $dm->persist($document);
+    }
 
-        //foreach ($removes as $document) {
-        //    if ($this->getArm()->isAutoRouteable($document)) {
-        //        $referrers = $dm->getReferrers($document);
-        //        $referrers = $referrers->filter(function ($referrer) {
-        //            if ($referrer instanceof AutoRoute) {
-        //                return true;
-        //            }
+    public function updateDocument($dm, $document, $taxonField, $taxonNames) 
+    {
+        $oid = spl_object_hash($document);
+        $realDocumentClass = ClassUtils::getRealClass(get_class($document));
+        $taxMeta = $this->getTaxMeta($realDocumentClass);
 
-        //            return false;
-        //        });
-        //        foreach ($referrers as $route) {
-        //            $uow->scheduleRemove($route);
-        //        }
-        //    }
-        //}
+        foreach ($taxonNames as $taxonName) {
+            $path = join('/', array($taxonField->getPath(), $taxonName));
+            $taxon = $dm->find(null, $path);
+            $taxonClass = $taxonField->getTaxonClass();
+
+            // if no taxon, create one
+            if (null === $taxon) {
+                $parentPath = $taxonField->getPath();
+                $parentDocument = $dm->find(null, $parentPath);
+
+                if (null === $parentDocument) {
+                    throw new \InvalidArgumentException(sprintf(
+                        'Parent path "%s" for taxon field "%s" in class "%s" does not exist.',
+                        $parentPath, $taxonField->name, $realDocumentClass
+                    ));
+                }
+
+                $taxon = new $taxonClass();
+                $taxon->setName($taxonName);
+                $taxon->setParent($parentDocument);
+                $dm->persist($taxon);
+            }
+
+            // validate taxon class
+            if (!$taxon instanceof $taxonClass) {
+                throw new \RuntimeException(sprintf(
+                    'Expected taxon at path "%s" to be instance of "%s" but got an instance of "%s"',
+                    $path, $taxonClass, get_class($taxon)
+                ));
+            }
+
+            // add taxon objects
+            $taxonObjectsFields = $taxMeta->getTaxonObjectsFields();
+
+            if (count($taxonObjectsFields) > 1) {
+                throw new \InvalidArgumentException(
+                    'Multiple taxonomies for a single class not currently supported'
+                );
+            }
+
+            // rather pointless loop given the above exception, but we want to support
+            // this in the future probably.
+            foreach ($taxonObjectsFields as $taxonObjectField) {
+                $existingTaxons = $taxonObjectField->reflection->getValue($document);
+
+                if (false === $existingTaxons->contains($taxon)) {
+                    $existingTaxons->add($taxon);
+                }
+            }
+        }
     }
 }

@@ -43,10 +43,12 @@ class TaxonomySubscriberTest extends BaseTestCase
         $this->dm->persist($post);
         $this->dm->flush();
 
-        $this->dm->refresh($post);
-        $objects = $post->getTaxonObjects();
+        $five = $this->dm->find(null, '/test/taxons/five');
+        $this->assertNotNull($five);
 
-        $this->assertNotNull($objects);
-        $this->assertCount(3, $objects);
+        $this->dm->refresh($post);
+        $taxons = $post->getTagObjects();
+        $this->assertNotNull($taxons);
+        $this->assertCount(3, $taxons);
     }
 }

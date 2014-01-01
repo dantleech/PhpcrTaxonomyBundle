@@ -5,12 +5,27 @@ namespace DTL\PhpcrTaxonomyBundle\Metadata;
 use Metadata\ClassMetadata as BaseClassMetadata;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonsMetadata;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonObjectsMetadata;
+use Metadata\PropertyMetadata;
 
 class ClassMetadata extends BaseClassMetadata
 {
     protected $defaultTaxonsField = array(
         'taxonClass' => 'DTL\PhpcrTaxonomyBundle\Document\Taxon',
     );
+
+    protected $hasMetadata = false;
+
+    public function hasMetadata() 
+    {
+        return $this->hasMetadata;
+    }
+
+
+    public function addPropertyMetadata(PropertyMetadata $propertyMetadata)
+    {
+        $this->hasMetadata = true;
+        return parent::addPropertyMetadata($propertyMetadata);
+    }
 
     /**
      * taxonsField = array('name' => $fieldName, 'path' => $taxonsPath)

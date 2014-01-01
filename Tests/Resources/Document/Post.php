@@ -82,15 +82,8 @@ class Post
         $this->tags = $tags;
     }
 
-    public function getTaxonObjects() 
+    public function getTagObjects() 
     {
         return $this->tagObjects;
     }
-
-    public function setTaxonObjects($taxonObjects)
-    {
-        $this->taxonObjects = $taxonObjects;
-        return $this;
-    }
-    
 }
