@@ -1,0 +1,40 @@
+{
+    "name": "dantleech/phpcr-taxonomy-bundle",
+    "type": "symfony-bundle",
+    "description": "Taxonomy Bundle for PHPCR-ODM",
+    "keywords": ["Symfony CMF", "taxonomy"],
+    "homepage": "http://www.dantleech.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daniel Leech",
+            "homepage": "http://www.dantleech.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": false,
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/framework-bundle": "~2.2",
+        "doctrine/phpcr-bundle": ">=1.0.0,<1.2-dev",
+        "doctrine/phpcr-odm": ">=1.0.0,<1.2-dev",
+        "jms/metadata": "1.5.0"
+    },
+    "require-dev": {
+        "symfony-cmf/routing-bundle": "1.1.*",
+        "symfony-cmf/testing": "1.1.*",
+        "symfony/monolog-bundle": "2.2.*"
+    },
+    "minimum-stability": "dev",
+    "autoload":{
+        "psr-0":{
+            "DTL\\PhpcrTaxonomyBundle": ""
+        }
+    },
+    "target-dir": "DTL/PhpcrTaxonomyBundle",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.1-dev"
+        }
+    }
+}
