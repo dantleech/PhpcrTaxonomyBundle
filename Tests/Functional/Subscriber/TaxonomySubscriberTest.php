@@ -26,7 +26,7 @@ class TaxonomySubscriberTest extends BaseTestCase
 
         // assert taxon objects
         $post = $this->dm->find(null, '/test/Post 1');
-        $taxonObjects = $post->getTaxonObjects();
+        $taxonObjects = $post->getTagObjects();
 
         $this->assertNotNull($taxonObjects);
         $this->assertCount(2, $taxonObjects);
