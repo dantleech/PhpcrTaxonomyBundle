@@ -1,9 +1,9 @@
 PHPCR Taxonomy Bundle
 =====================
 
-[![Build Status](https://secure.travis-ci.org/dantleech/PhpcrTaxonomyBundle.png)](http://travis-ci.org/symfony-cmf/MenuBundle)
-[![Latest Stable Version](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/version.png)](https://packagist.org/packages/symfony-cmf/menu-bundle)
-[![Total Downloads](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/d/total.png)](https://packagist.org/packages/symfony-cmf/menu-bundle)
+[![Build Status](https://secure.travis-ci.org/dantleech/PhpcrTaxonomyBundle.png)](http://travis-ci.org/dantleech/PhpcrTaxonomyBundle)
+[![Latest Stable Version](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/version.png)](https://packagist.org/packages/dantleech/phpcr-taxonomy-bundle)
+[![Total Downloads](https://poser.pugx.org/dantleech/phpcr-taxonomy-bundle/d/total.png)](https://packagist.org/packages/dantleech/phpcr-taxonomy-bundle)
 
 **NOTE::** This is a work in progress.
 
