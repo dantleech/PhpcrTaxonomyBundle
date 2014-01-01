@@ -135,6 +135,7 @@ class TaxonomySubscriber implements EventSubscriber
         $oid = spl_object_hash($document);
         $realDocumentClass = ClassUtils::getRealClass(get_class($document));
         $taxMeta = $this->getTaxMeta($realDocumentClass);
+        $taxons = array();
 
         foreach ($taxonNames as $taxonName) {
             $path = join('/', array($taxonField->getPath(), $taxonName));
@@ -167,23 +168,26 @@ class TaxonomySubscriber implements EventSubscriber
                 ));
             }
 
-            // add taxon objects
-            $taxonObjectsFields = $taxMeta->getTaxonObjectsFields();
+            $taxons[] = $taxon;
+        }
 
-            if (count($taxonObjectsFields) > 1) {
-                throw new \InvalidArgumentException(
-                    'Multiple taxonomies for a single class not currently supported'
-                );
-            }
+        // add taxon objects
+        $taxonObjectsFields = $taxMeta->getTaxonObjectsFields();
 
-            // rather pointless loop given the above exception, but we want to support
-            // this in the future probably.
-            foreach ($taxonObjectsFields as $taxonObjectField) {
-                $existingTaxons = $taxonObjectField->reflection->getValue($document);
+        if (count($taxonObjectsFields) > 1) {
+            throw new \InvalidArgumentException(
+                'Multiple taxonomies for a single class not currently supported'
+            );
+        }
 
-                if (false === $existingTaxons->contains($taxon)) {
-                    $existingTaxons->add($taxon);
-                }
+        // rather pointless loop given the above exception, but we want to support
+        // this in the future probably.
+        foreach ($taxonObjectsFields as $taxonObjectField) {
+            $existingTaxons = $taxonObjectField->reflection->getValue($document);
+            $existingTaxons->clear();
+
+            foreach ($taxons as $taxon) {
+                $existingTaxons->add($taxon);
             }
         }
     }

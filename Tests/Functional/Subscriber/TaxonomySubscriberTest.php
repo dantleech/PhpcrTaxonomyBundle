@@ -32,23 +32,44 @@ class TaxonomySubscriberTest extends BaseTestCase
         $this->assertCount(2, $taxonObjects);
     }
 
-    public function testChangeTaxons()
+    public function provideChangeTaxons()
+    {
+        // Post fixture has tags "one" and "two"
+        return array(
+            array(
+                array('one', 'two', 'three', 'four'),
+            ),
+            array(
+                array('one'),
+            ),
+            array(
+                array(),
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider provideChangeTaxons
+     */
+    public function testChangeTaxons($taxonNames)
     {
         $post = $this->dm->find(null, '/test/Post 1');
         $this->assertNotNull($post);
 
         $post->setTitle('New Post Title');
-        $post->setTags(array('one', 'two', 'five'));
+        $post->setTags($taxonNames);
 
         $this->dm->persist($post);
         $this->dm->flush();
 
-        $five = $this->dm->find(null, '/test/taxons/five');
-        $this->assertNotNull($five);
+        foreach ($taxonNames as $taxonName) {
+            $taxon = $this->dm->find(null, '/test/taxons/'.$taxonName);
+            $this->assertNotNull($taxon);
+        }
 
         $this->dm->refresh($post);
         $taxons = $post->getTagObjects();
         $this->assertNotNull($taxons);
-        $this->assertCount(3, $taxons);
+        $this->assertCount(count($taxonNames), $taxons);
     }
 }
