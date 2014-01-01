@@ -20,10 +20,7 @@ class LoadPostData implements FixtureInterface
         $post = new Post();
         $post->setParent($root);
         $post->setTitle('Post 1');
-        $post->setTags(array(
-            new Taxon('one'),
-            new Taxon('two'),
-        ));
+        $post->setTags(array('one', 'two'));
         $manager->persist($post);
 
         $manager->flush();

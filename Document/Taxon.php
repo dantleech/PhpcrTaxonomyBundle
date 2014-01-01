@@ -10,6 +10,11 @@ use Doctrine\ODM\PHPCR\Mapping\Annotations as PHPCR;
 class Taxon
 {
     /**
+     * @PHPCR\Id()
+     */
+    protected $id;
+
+    /**
      * @PHPCR\ParentDocument()
      */
     protected $parent;
@@ -22,7 +27,7 @@ class Taxon
     /**
      * @PHPCR\MixedReferrers()
      */
-    protected $referrers;
+    protected $referrers = array();
 
     public function __construct($name = null)
     {
@@ -47,5 +52,10 @@ class Taxon
     public function setParent($parent)
     {
         $this->parent = $parent;
+    }
+
+    public function getReferrers()
+    {
+        return $this->referrers;
     }
 }

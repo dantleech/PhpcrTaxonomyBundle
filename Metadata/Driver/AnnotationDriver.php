@@ -27,15 +27,26 @@ class AnnotationDriver implements AdvancedDriverInterface
     {
         $meta = new ClassMetadata($class->name);
         foreach ($class->getProperties() as $property) {
-            $annotation = $this->reader->getPropertyAnnotation(
+            $taxonAnn = $this->reader->getPropertyAnnotation(
                 $property,
                 'DTL\PhpcrTaxonomyBundle\Metadata\Annotations\Taxons'
             );
 
-            if ($annotation) {
+            $taxonObjectsAnn = $this->reader->getPropertyAnnotation(
+                $property,
+                'DTL\PhpcrTaxonomyBundle\Metadata\Annotations\TaxonObjects'
+            );
+
+            if ($taxonAnn) {
                 $meta->addTaxonsField(array(
                     'name' => $property->name,
-                    'path' => $annotation->path,
+                    'path' => $taxonAnn->path,
+                ));
+            }
+
+            if ($taxonObjectsAnn) {
+                $meta->addTaxonObjectsField(array(
+                    'name' => $property->name,
                 ));
             }
         }

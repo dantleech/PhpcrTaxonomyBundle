@@ -4,6 +4,7 @@ namespace DTL\PhpcrTaxonomyBundle\Tests\Resources\Document;
 
 use Doctrine\ODM\PHPCR\Mapping\Annotations as PHPCR;
 use DTL\PhpcrTaxonomyBundle\Metadata\Annotations as PhpcrTaxonomy;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @PHPCR\Document(referenceable=true)
@@ -26,9 +27,19 @@ class Post
     protected $tags;
 
     /**
+     * @PhpcrTaxonomy\TaxonObjects()
+     */
+    protected $tagObjects;
+
+    /**
      * @PHPCR\NodeName()
      */
     protected $title;
+
+    public function __construct()
+    {
+        $this->tagObjects = new ArrayCollection();
+    }
 
     public function getId() 
     {
@@ -69,6 +80,17 @@ class Post
     public function setTags($tags)
     {
         $this->tags = $tags;
+    }
+
+    public function getTaxonObjects() 
+    {
+        return $this->tagObjects;
+    }
+
+    public function setTaxonObjects($taxonObjects)
+    {
+        $this->taxonObjects = $taxonObjects;
+        return $this;
     }
     
 }

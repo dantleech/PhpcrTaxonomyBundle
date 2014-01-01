@@ -23,6 +23,13 @@ class TaxonomySubscriberTest extends BaseTestCase
         $two = $this->dm->find(null, '/test/taxons/two');
         $this->assertNotNull($one);
         $this->assertNotNull($two);
+
+        // assert taxon objects
+        $post = $this->dm->find(null, '/test/Post 1');
+        $taxonObjects = $post->getTaxonObjects();
+
+        $this->assertNotNull($taxonObjects);
+        $this->assertCount(2, $taxonObjects);
     }
 
     public function testChangeTaxons()
@@ -30,13 +37,16 @@ class TaxonomySubscriberTest extends BaseTestCase
         $post = $this->dm->find(null, '/test/Post 1');
         $this->assertNotNull($post);
 
-        $post->setTitle('asd');
-        $post->setTags(array(
-            new Taxon('one'),
-            new Taxon('two'),
-        ));
+        $post->setTitle('New Post Title');
+        $post->setTags(array('one', 'two', 'five'));
 
         $this->dm->persist($post);
         $this->dm->flush();
+
+        $this->dm->refresh($post);
+        $objects = $post->getTaxonObjects();
+
+        $this->assertNotNull($objects);
+        $this->assertCount(3, $objects);
     }
 }

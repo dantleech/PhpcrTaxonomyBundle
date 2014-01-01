@@ -37,6 +37,11 @@ class Post
      * @PhpcrTaxonomy\Taxons(path="/test/taxons")
      */
     public $tags;
+
+    /**
+     * @PhpcrTaxonomy\TaxonObjects()
+     */
+    public $tagObjects;
 }
 ````
 
@@ -44,10 +49,7 @@ Tags can be added as follows:
 
 ````php
 $post = new Post();
-$post->setTags(array(
-    new Taxon('one'),
-    new Taxon('two'),
-));
+$post->setTags(array('one', 'two'));
 ````
 
 The parent document for each tag is determined by the `path` property of the

@@ -15,6 +15,8 @@ class AnnotationDriverTest extends BaseTestCase
     {
         $meta = $this->driver->getMetadataForClass('DTL\PhpcrTaxonomyBundle\Tests\Resources\Document\Post')
             ->getOutsideClassMetadata();
+
+        // taxonsFields
         $taxonsFields = $meta->getTaxonsFields();
 
         $this->assertCount(1, $taxonsFields);
@@ -28,5 +30,12 @@ class AnnotationDriverTest extends BaseTestCase
             'path' => $taxonsField->getPath(),
             'taxonClass' => $taxonsField->getTaxonClass(),
         ));
+
+        // taxonObjectsFields
+        $taxonObjectsFields = $meta->getTaxonObjectsFields();
+
+        $this->assertCount(1, $taxonObjectsFields);
+        $taxonObjectsField = current($taxonObjectsFields);
+        $this->assertEquals('tagObjects', $taxonObjectsField->name);
     }
 }
