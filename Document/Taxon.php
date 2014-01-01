@@ -19,6 +19,11 @@ class Taxon
      */
     protected $name;
 
+    /**
+     * @PHPCR\MixedReferrers()
+     */
+    protected $referrers;
+
     public function __construct($name = null)
     {
         $this->name = $name;

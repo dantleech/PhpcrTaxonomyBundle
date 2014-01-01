@@ -13,7 +13,7 @@ class AnnotationDriverTest extends BaseTestCase
 
     public function testMetadata()
     {
-        $meta = $this->driver->getMetadataForClass('DTL\PhpcrTaxonomyBundle\Tests\Resources\app\Document\Post')
+        $meta = $this->driver->getMetadataForClass('DTL\PhpcrTaxonomyBundle\Tests\Resources\Document\Post')
             ->getOutsideClassMetadata();
         $taxonsFields = $meta->getTaxonsFields();
 
@@ -23,6 +23,10 @@ class AnnotationDriverTest extends BaseTestCase
             'name' => 'tags',
             'path' => '/test/taxons',
             'taxonClass' => 'DTL\PhpcrTaxonomyBundle\Document\Taxon',
-        ), $taxonsField);
+        ), array(
+            'name' => $taxonsField->name,
+            'path' => $taxonsField->getPath(),
+            'taxonClass' => $taxonsField->getTaxonClass(),
+        ));
     }
 }

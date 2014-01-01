@@ -13,6 +13,7 @@ use Doctrine\ODM\PHPCR\Mapping\ClassMetadata;
 use Doctrine\Common\Util\ClassUtils;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonsMetadata;
 use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
+use DTL\PhpcrTaxonomyBundle\Document\Taxon;
 
 /**
  * Doctrine PHPCR ODM listener for automatically managing
@@ -32,6 +33,7 @@ class TaxonomySubscriber implements EventSubscriber
         return array(
             Event::loadClassMetadata,
             Event::prePersist,
+            Event::preUpdate,
         );
     }
 
@@ -53,13 +55,17 @@ class TaxonomySubscriber implements EventSubscriber
                 if ($propertyMetadata instanceof TaxonsMetadata) {
                     $odmMeta->mapManyToMany(array(
                         'fieldName' => $propertyMetadata->name,
-                        'cascade' => ClassMetadata::CASCADE_ALL,
                         'sourceDocument' => $odmMeta->name,
                         'targetDocument' => $propertyMetadata->getTaxonClass(),
                     ));
                 }
             }
         }
+    }
+
+    public function preUpdate(LifecycleEventArgs $args)
+    {
+        return $this->prePersist($args);
     }
 
     public function prePersist(LifecycleEventArgs $args)
@@ -84,9 +90,14 @@ class TaxonomySubscriber implements EventSubscriber
 
                     foreach ($taxons as $taxon) {
                         $taxon->setParent($parent);
+                        $dm->persist($taxon);
                     }
                 }
             }
+        }
+
+        if ($doc instanceof Taxon) {
+            
         }
     }
 }
