@@ -16,6 +16,7 @@ use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use DTL\PhpcrTaxonomyBundle\Document\Taxon;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonObjectsMetadata;
 use Doctrine\Common\Collections\ArrayCollection;
+use DTL\PhpcrTaxonomyBundle\Document\TaxonInterface;
 
 /**
  * Doctrine PHPCR ODM listener for automatically managing
@@ -28,6 +29,7 @@ class TaxonomySubscriber implements EventSubscriber
     protected $inFlush = false;
 
     protected $pendingDocuments = array();
+    protected $originalReferrerCount = array();
 
     public function __construct(ContainerInterface $container)
     {
@@ -39,6 +41,7 @@ class TaxonomySubscriber implements EventSubscriber
         return array(
             Event::loadClassMetadata,
             Event::preFlush,
+            Event::postLoad,
         );
     }
 
@@ -189,6 +192,16 @@ class TaxonomySubscriber implements EventSubscriber
             foreach ($taxons as $taxon) {
                 $existingTaxons->add($taxon);
             }
+        }
+    }
+
+    public function postLoad(LifecycleEventArgs $args)
+    {
+        $doc = $args->getObject();
+
+        if ($doc instanceof TaxonInterface) {
+            $oid = spl_object_hash($doc);
+            $this->originalReferrerCount[$oid] = $doc->getReferrerCount();
         }
     }
 }

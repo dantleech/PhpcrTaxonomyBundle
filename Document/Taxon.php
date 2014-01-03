@@ -7,7 +7,7 @@ use Doctrine\ODM\PHPCR\Mapping\Annotations as PHPCR;
 /**
  * @PHPCR\Document(referenceable=true)
  */
-class Taxon
+class Taxon implements TaxonInterface
 {
     /**
      * @PHPCR\Id()
@@ -29,10 +29,10 @@ class Taxon
      */
     protected $referrers = array();
 
-    public function __construct($name = null)
-    {
-        $this->name = $name;
-    }
+    /**
+     * @PHPCR\Long()
+     */
+    protected $referrerCount = 0;
 
     public function getName() 
     {
@@ -58,4 +58,15 @@ class Taxon
     {
         return $this->referrers;
     }
+
+    public function getReferrerCount() 
+    {
+        return $this->referrerCount;
+    }
+    
+    public function setReferrerCount($referrerCount)
+    {
+        $this->referrerCount = $referrerCount;
+    }
+    
 }

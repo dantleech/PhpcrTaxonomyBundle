@@ -4,6 +4,7 @@ namespace DTL\PhpcrTaxonomyBundle\Tests\Functional\Subscriber;
 
 use Symfony\Cmf\Component\Testing\Functional\BaseTestCase;
 use DTL\PhpcrTaxonomyBundle\Document\Taxon;
+use DTL\PhpcrTaxonomyBundle\Tests\Resources\Document\Post;
 
 class TaxonomySubscriberTest extends BaseTestCase
 {
@@ -71,5 +72,73 @@ class TaxonomySubscriberTest extends BaseTestCase
         $taxons = $post->getTagObjects();
         $this->assertNotNull($taxons);
         $this->assertCount(count($taxonNames), $taxons);
+    }
+
+    public function createPost($title, array $tags)
+    {
+        $parent = $this->dm->find(null, '/test');
+        $post = new Post();
+        $post->setParent($parent);
+        $post->setTitle($title);
+        $post->setTags($tags);
+        $this->dm->persist($post);
+        $this->dm->flush();
+    }
+
+    public function deletePost($title)
+    {
+        $post = $this->dm->find('/test/'.$title);
+        $this->dm->remove($post);
+        $this->dm->flush();
+    }
+
+    public function provideTagCount()
+    {
+        return array(
+            array(
+                array(
+                    array('P1', array('one', 'two', 'three')),
+                    array('P2', array('one', 'two', 'three')),
+                    array('P3', array('one', 'two', 'three')),
+                ),
+                array(
+                    'one' => 3,
+                    'two' => 3,
+                    'three' => 3,
+                ),
+                array(
+                    'Post 1'
+                ),
+                array(
+                    'one' => 2,
+                    'two' => 2,
+                    'three' => 2,
+                ),
+            )
+        );
+    }
+
+
+    /**
+     * @dataProvider provideTagCount
+     */
+    public function testTagCount($postData, $assertions, $deleteData, $deleteAssertions)
+    {
+        foreach ($postData as $postDatum) {
+            $this->createPost($postDatum[0], $postDatum[1]);
+        }
+
+        foreach ($assertions as $tag => $count) {
+            $tag = $this->dm->find(null, '/test/taxons/'.$tag);
+            $this->assertEquals($count, $tag->getReferrerCount());
+        }
+
+        foreach ($deleteData as $title) {
+            $this->deletePost($title);
+        }
+        foreach ($deleteAssertions as $tag => $count) {
+            $tag = $this->dm->find('/test/taxons/'.$tag);
+            $this->assertEquals($count, $tag->getReferrerCount());
+        }
     }
 }

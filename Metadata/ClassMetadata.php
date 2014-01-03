@@ -6,6 +6,7 @@ use Metadata\ClassMetadata as BaseClassMetadata;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonsMetadata;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonObjectsMetadata;
 use Metadata\PropertyMetadata;
+use Doctrine\Common\Persistence\Mapping\MappingException;
 
 class ClassMetadata extends BaseClassMetadata
 {
@@ -68,16 +69,24 @@ class ClassMetadata extends BaseClassMetadata
         $this->addPropertyMetadata($taxonObjectsMetadata);
     }
 
-    public function getTaxonsFields() 
+    public function getTaxonsField() 
     {
         $ret = array();
         foreach ($this->propertyMetadata as $propertyMeta) {
             if ($propertyMeta instanceof TaxonsMetadata) {
-                $ret[] = $propertyMeta;
+                return $propertyMeta;
             }
         }
 
-        return $ret;
+        throw new MappingException(sprintf(
+            'No taxons field mapped for class "%s"'
+        ));
+    }
+
+    public function getTaxons($document)
+    {
+        $prop = $this->getReflection()->getProperty(
+            $this->getTaxonsFields
     }
 
     public function getTaxonObjectsFields() 
