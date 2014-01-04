@@ -38,14 +38,14 @@ class AnnotationDriver implements AdvancedDriverInterface
             );
 
             if ($taxonAnn) {
-                $meta->addTaxonsField(array(
+                $meta->setTaxonsField(array(
                     'name' => $property->name,
                     'path' => $taxonAnn->path,
                 ));
             }
 
             if ($taxonObjectsAnn) {
-                $meta->addTaxonObjectsField(array(
+                $meta->setTaxonObjectsField(array(
                     'name' => $property->name,
                 ));
             }

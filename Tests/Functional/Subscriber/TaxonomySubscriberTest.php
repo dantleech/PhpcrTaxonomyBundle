@@ -85,9 +85,17 @@ class TaxonomySubscriberTest extends BaseTestCase
         $this->dm->flush();
     }
 
+    public function updatePost($title, array $tags)
+    {
+        $post = $this->dm->find(null, '/test/' . $title);
+        $post->setTags($tags);
+        $this->dm->persist($post);
+        $this->dm->flush();
+    }
+
     public function deletePost($title)
     {
-        $post = $this->dm->find('/test/'.$title);
+        $post = $this->dm->find(null, '/test/'.$title);
         $this->dm->remove($post);
         $this->dm->flush();
     }
@@ -96,23 +104,97 @@ class TaxonomySubscriberTest extends BaseTestCase
     {
         return array(
             array(
+                // create
                 array(
-                    array('P1', array('one', 'two', 'three')),
-                    array('P2', array('one', 'two', 'three')),
-                    array('P3', array('one', 'two', 'three')),
+                    array('P1', array('chips', 'cheese', 'peas')),
+                    array('P2', array('chips', 'cheese', 'peas')),
+                    array('P3', array('chips', 'cheese', 'peas')),
                 ),
                 array(
-                    'one' => 3,
-                    'two' => 3,
-                    'three' => 3,
+                    'chips' => 3,
+                    'cheese' => 3,
+                    'peas' => 3,
+                ),
+                // update
+                array(
                 ),
                 array(
-                    'Post 1'
+                ),
+                // delete
+                array(
+                    'P1'
                 ),
                 array(
-                    'one' => 2,
-                    'two' => 2,
-                    'three' => 2,
+                    'chips' => 2,
+                    'cheese' => 2,
+                    'peas' => 2,
+                ),
+            ),
+            array(
+                // create
+                array(
+                    array('P1', array('chips', 'cheese', 'peas')),
+                    array('P2', array('cheese')),
+                    array('P3', array('peas')),
+                ),
+                array(
+                    'chips' => 1,
+                    'cheese' => 2,
+                    'peas' => 2,
+                ),
+                // update
+                array(
+                    array('P1', array('chips')),
+                ),
+                array(
+                    'chips' => 1,
+                    'cheese' => 1,
+                    'peas' => 1,
+                ),
+                // deelete
+                array(
+                    'P1',
+                    'P2',
+                ),
+                array(
+                    'chips' => 0,
+                    'cheese' => 0,
+                    'peas' => 1,
+                ),
+            ),
+            array(
+                // create
+                array(
+                    array('P1', array('chips', 'cheese', 'peas')),
+                    array('P2', array('cheese')),
+                    array('P3', array('peas')),
+                ),
+                array(
+                    'chips' => 1,
+                    'cheese' => 2,
+                    'peas' => 2,
+                ),
+                // update
+                array(
+                    array('P1', array()),
+                    array('P2', array()),
+                    array('P3', array()),
+                ),
+                array(
+                    'chips' => 0,
+                    'cheese' => 0,
+                    'peas' => 0,
+                ),
+                // delete
+                array(
+                    'P1',
+                    'P2',
+                    'P3',
+                ),
+                array(
+                    'chips' => 0,
+                    'cheese' => 0,
+                    'peas' => 0,
                 ),
             )
         );
@@ -122,7 +204,7 @@ class TaxonomySubscriberTest extends BaseTestCase
     /**
      * @dataProvider provideTagCount
      */
-    public function testTagCount($postData, $assertions, $deleteData, $deleteAssertions)
+    public function testTagCount($postData, $assertions, $updateData, $updateAssertions, $deleteData, $deleteAssertions)
     {
         foreach ($postData as $postDatum) {
             $this->createPost($postDatum[0], $postDatum[1]);
@@ -130,15 +212,24 @@ class TaxonomySubscriberTest extends BaseTestCase
 
         foreach ($assertions as $tag => $count) {
             $tag = $this->dm->find(null, '/test/taxons/'.$tag);
-            $this->assertEquals($count, $tag->getReferrerCount());
+            $this->assertEquals($count, $tag->getReferrerCount(), 'Refferer count after create');
+        }
+
+        foreach ($updateData as $updateDatum) {
+            $this->updatePost($updateDatum[0], $updateDatum[1]);
+        }
+
+        foreach ($updateAssertions as $tagName => $count) {
+            $tag = $this->dm->find(null, '/test/taxons/'.$tagName);
+            $this->assertEquals($count, $tag->getReferrerCount(), 'Referrer count for "' . $tagName . '" after update');
         }
 
         foreach ($deleteData as $title) {
             $this->deletePost($title);
         }
-        foreach ($deleteAssertions as $tag => $count) {
-            $tag = $this->dm->find('/test/taxons/'.$tag);
-            $this->assertEquals($count, $tag->getReferrerCount());
+        foreach ($deleteAssertions as $tagName => $count) {
+            $tag = $this->dm->find(null, '/test/taxons/'.$tagName);
+            $this->assertEquals($count, $tag->getReferrerCount(), 'Referrer count for "' . $tagName . '" after delete');
         }
     }
 }

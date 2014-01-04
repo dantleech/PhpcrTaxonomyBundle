@@ -16,7 +16,6 @@ use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use DTL\PhpcrTaxonomyBundle\Document\Taxon;
 use DTL\PhpcrTaxonomyBundle\Metadata\Property\TaxonObjectsMetadata;
 use Doctrine\Common\Collections\ArrayCollection;
-use DTL\PhpcrTaxonomyBundle\Document\TaxonInterface;
 
 /**
  * Doctrine PHPCR ODM listener for automatically managing
@@ -29,7 +28,7 @@ class TaxonomySubscriber implements EventSubscriber
     protected $inFlush = false;
 
     protected $pendingDocuments = array();
-    protected $originalReferrerCount = array();
+    protected $originalTaxons = array();
 
     public function __construct(ContainerInterface $container)
     {
@@ -118,10 +117,24 @@ class TaxonomySubscriber implements EventSubscriber
             $taxMeta = $this->getTaxMeta($realDocumentClass);
 
             if ($taxMeta->hasMetadata()) {
-                foreach ($taxMeta->getTaxonsFields() as $taxonField) {
-                    // yes, this is slightly bizzare ..
-                    $taxonNames = $taxonField->getValue($document);
-                    $this->updateDocument($dm, $document, $taxonField, $taxonNames);
+                $taxonField = $taxMeta->getTaxonsField();
+
+                // yes, this is slightly bizzare ..
+                $taxonNames = $taxonField->getValue($document);
+                $this->updateDocument($dm, $document, $taxonField, $taxonNames);
+            }
+        }
+
+        $scheduledRemoves = $uow->getScheduledRemovals();
+
+        foreach ($scheduledRemoves as $document) {
+            $realDocumentClass = ClassUtils::getRealClass(get_class($document));
+            $taxMeta = $this->getTaxMeta($realDocumentClass);
+
+            if ($taxMeta->hasMetadata()) {
+                foreach ($taxMeta->getTaxonObjects($document) as $taxon) {
+                    $taxon->setReferrerCount($taxon->getReferrerCount() - 1);
+                    $dm->persist($taxon);
                 }
             }
         }
@@ -131,6 +144,7 @@ class TaxonomySubscriber implements EventSubscriber
         $dm->flush();
         $this->inFlush = false;
         $dm->persist($document);
+
     }
 
     public function updateDocument($dm, $document, $taxonField, $taxonNames) 
@@ -138,7 +152,7 @@ class TaxonomySubscriber implements EventSubscriber
         $oid = spl_object_hash($document);
         $realDocumentClass = ClassUtils::getRealClass(get_class($document));
         $taxMeta = $this->getTaxMeta($realDocumentClass);
-        $taxons = array();
+        $taxons = new ArrayCollection();
 
         foreach ($taxonNames as $taxonName) {
             $path = join('/', array($taxonField->getPath(), $taxonName));
@@ -160,8 +174,9 @@ class TaxonomySubscriber implements EventSubscriber
                 $taxon = new $taxonClass();
                 $taxon->setName($taxonName);
                 $taxon->setParent($parentDocument);
-                $dm->persist($taxon);
             }
+
+            $dm->persist($taxon);
 
             // validate taxon class
             if (!$taxon instanceof $taxonClass) {
@@ -171,26 +186,26 @@ class TaxonomySubscriber implements EventSubscriber
                 ));
             }
 
-            $taxons[] = $taxon;
-        }
-
-        // add taxon objects
-        $taxonObjectsFields = $taxMeta->getTaxonObjectsFields();
-
-        if (count($taxonObjectsFields) > 1) {
-            throw new \InvalidArgumentException(
-                'Multiple taxonomies for a single class not currently supported'
-            );
+            $taxons->add($taxon);
         }
 
         // rather pointless loop given the above exception, but we want to support
         // this in the future probably.
-        foreach ($taxonObjectsFields as $taxonObjectField) {
-            $existingTaxons = $taxonObjectField->reflection->getValue($document);
-            $existingTaxons->clear();
+        $currentTaxons = $taxMeta->getTaxonObjects($document);
 
-            foreach ($taxons as $taxon) {
-                $existingTaxons->add($taxon);
+        foreach ($currentTaxons as $currentTaxon) {
+            if (false === $taxons->contains($currentTaxon)) {
+                $currentTaxon->setReferrerCount($currentTaxon->getReferrerCount() - 1);
+                $currentTaxons->removeElement($currentTaxon);
+
+                $dm->persist($currentTaxon);
+            }
+        }
+
+        foreach ($taxons as $taxon) {
+            if (false === $currentTaxons->contains($taxon)) {
+                $taxon->setReferrerCount($taxon->getReferrerCount() + 1);
+                $currentTaxons->add($taxon);
             }
         }
     }
@@ -198,10 +213,11 @@ class TaxonomySubscriber implements EventSubscriber
     public function postLoad(LifecycleEventArgs $args)
     {
         $doc = $args->getObject();
+        $meta = $this->getTaxMeta(get_class($doc));
 
-        if ($doc instanceof TaxonInterface) {
+        if ($meta->hasMetadata()) {
             $oid = spl_object_hash($doc);
-            $this->originalReferrerCount[$oid] = $doc->getReferrerCount();
+            $this->originalTaxons[$oid] = $meta->getTaxons($doc);
         }
     }
 }

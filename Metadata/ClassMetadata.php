@@ -31,7 +31,7 @@ class ClassMetadata extends BaseClassMetadata
     /**
      * taxonsField = array('name' => $fieldName, 'path' => $taxonsPath)
      */
-    public function addTaxonsField(array $taxonsField)
+    public function setTaxonsField(array $taxonsField)
     {
         if (!isset($taxonsField['name'])) {
             throw new \InvalidArgumentException(sprintf(
@@ -56,7 +56,7 @@ class ClassMetadata extends BaseClassMetadata
         $this->addPropertyMetadata($taxonMetadata);
     }
 
-    public function addTaxonObjectsField(array $taxonObjectsField)
+    public function setTaxonObjectsField(array $taxonObjectsField)
     {
         if (!isset($taxonObjectsField['name'])) {
             throw new \InvalidArgumentException(sprintf(
@@ -79,26 +79,42 @@ class ClassMetadata extends BaseClassMetadata
         }
 
         throw new MappingException(sprintf(
-            'No taxons field mapped for class "%s"'
+            'No taxons field mapped for class "%s"', $this->getReflection()->name, $this->getReflection()->name
         ));
     }
 
     public function getTaxons($document)
     {
         $prop = $this->getReflection()->getProperty(
-            $this->getTaxonsFields
+            $this->getTaxonsField()->name
+        );
+        $prop->setAccessible(true);
+
+        return $prop->getValue($document);
     }
 
-    public function getTaxonObjectsFields() 
+    public function getTaxonObjects($document)
+    {
+        $prop = $this->getReflection()->getProperty(
+            $this->getTaxonObjectsField()->name
+        );
+        $prop->setAccessible(true);
+
+        return $prop->getValue($document);
+    }
+
+    public function getTaxonObjectsField() 
     {
         $ret = array();
         foreach ($this->propertyMetadata as $propertyMeta) {
             if ($propertyMeta instanceof TaxonObjectsMetadata) {
-                $ret[] = $propertyMeta;
+                return $propertyMeta;
             }
         }
 
-        return $ret;
+        throw new MappingException(sprintf(
+            'No taxon objects field mapped for class "%s"', $this->getReflection()->name
+        ));
     }
     
     public function getReflection()

@@ -12,10 +12,11 @@ What works:
 - Automatically creating tag objects at spsecified paths
   - Paths effectively act as taxonomies
 - Automatic tag object association with target document
+- Taxon referrer count, because PHPCR-ODM doesn't do aggregation. (for tag clouds for example)
 
 What is planned:
 
-- Taxon referrer count, because PHPCR-ODM doesn't do aggregation. (for tag clouds for example)
+- Command to "fix" or initialize taxon referrer counts
 - Orphan removal
 - Static taxonomies - i.e. specify if new taxons can be created.
 - Hierachical tagging, e.g. specify "Laptops > Levono > X200" as a tag,

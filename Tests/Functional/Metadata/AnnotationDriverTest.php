@@ -17,10 +17,9 @@ class AnnotationDriverTest extends BaseTestCase
             ->getOutsideClassMetadata();
 
         // taxonsFields
-        $taxonsFields = $meta->getTaxonsFields();
+        $taxonsField = $meta->getTaxonsField();
 
-        $this->assertCount(1, $taxonsFields);
-        $taxonsField = current($taxonsFields);
+        $this->assertNotNull($taxonsField);
         $this->assertEquals(array(
             'name' => 'tags',
             'path' => '/test/taxons',
@@ -32,10 +31,9 @@ class AnnotationDriverTest extends BaseTestCase
         ));
 
         // taxonObjectsFields
-        $taxonObjectsFields = $meta->getTaxonObjectsFields();
+        $taxonObjectsField = $meta->getTaxonObjectsField();
 
-        $this->assertCount(1, $taxonObjectsFields);
-        $taxonObjectsField = current($taxonObjectsFields);
+        $this->assertNotNull(1, $taxonObjectsField);
         $this->assertEquals('tagObjects', $taxonObjectsField->name);
     }
 }
