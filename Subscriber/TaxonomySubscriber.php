@@ -27,9 +27,6 @@ class TaxonomySubscriber implements EventSubscriber
 {
     protected $inFlush = false;
 
-    protected $pendingDocuments = array();
-    protected $originalTaxons = array();
-
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
@@ -40,7 +37,6 @@ class TaxonomySubscriber implements EventSubscriber
         return array(
             Event::loadClassMetadata,
             Event::preFlush,
-            Event::postLoad,
         );
     }
 
@@ -212,17 +208,6 @@ class TaxonomySubscriber implements EventSubscriber
                 $taxon->setReferrerCount($taxon->getReferrerCount() + 1);
                 $currentTaxons->add($taxon);
             }
-        }
-    }
-
-    public function postLoad(LifecycleEventArgs $args)
-    {
-        $doc = $args->getObject();
-        $meta = $this->getTaxMeta(get_class($doc));
-
-        if ($meta->hasMetadata()) {
-            $oid = spl_object_hash($doc);
-            $this->originalTaxons[$oid] = $meta->getTaxons($doc);
         }
     }
 }
