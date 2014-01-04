@@ -111,12 +111,14 @@ class TaxonomySubscriber implements EventSubscriber
         $scheduledInserts = $uow->getScheduledInserts();
         $scheduledUpdates = $uow->getScheduledUpdates();
         $updates = array_merge($scheduledInserts, $scheduledUpdates);
+        $postFlushDocuments = array();
 
         foreach ($updates as $document) {
             $realDocumentClass = ClassUtils::getRealClass(get_class($document));
             $taxMeta = $this->getTaxMeta($realDocumentClass);
 
             if ($taxMeta->hasMetadata()) {
+                $postFlushDocuments[] = $document;
                 $taxonField = $taxMeta->getTaxonsField();
 
                 // yes, this is slightly bizzare ..
@@ -143,7 +145,10 @@ class TaxonomySubscriber implements EventSubscriber
         $this->inFlush = true;
         $dm->flush();
         $this->inFlush = false;
-        $dm->persist($document);
+
+        foreach ($postFlushDocuments as $postFlushDocument) {
+            $dm->persist($postFlushDocument);
+        }
 
     }
 
