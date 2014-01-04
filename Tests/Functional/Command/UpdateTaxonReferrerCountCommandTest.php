@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use DTL\PhpcrTaxonomyBundle\Command\UpdateTaxonReferrerCountCommand;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\NullOutput;
 
 class UpdateTaxonReferrerCountCommandTest extends BaseTestCase
 {
@@ -17,15 +18,14 @@ class UpdateTaxonReferrerCountCommandTest extends BaseTestCase
             'DTL\PhpcrTaxonomyBundle\Tests\Resources\DataFixtures\PHPCR\LoadPostData'
         ));
 
-        $dm = $this->getContainer()->get('doctrine_phpcr')->getManager();
-        $repo = $dm->getRepository('DTL\PhpcrTaxonomyBundle\Document\Taxon');
+        $this->dm = $this->getContainer()->get('doctrine_phpcr')->getManager();
+        $repo = $this->dm->getRepository('DTL\PhpcrTaxonomyBundle\Document\Taxon');
         $taxons = $repo->findAll();
         foreach ($taxons as $taxon) {
-            $node = $dm->getNodeForDocument($taxon);
+            $node = $this->dm->getNodeForDocument($taxon);
             $node->setProperty('referrerCount', 0);
         }
-        $dm->getPhpcrSession()->save();
-        $dm->clear();
+        $this->dm->getPhpcrSession()->save();
 
         // reset referrer count
         $application = new Application(static::$kernel);
@@ -39,12 +39,15 @@ class UpdateTaxonReferrerCountCommandTest extends BaseTestCase
         $input = new ArrayInput(array(
             'foo:bar'
         ));
-        $output = new BufferedOutput();
+        // sf 2.4+ $output = new BufferedOutput();
+        $output = new NullOutput();
         $this->command->run($input, $output);
 
-        $output = $output->fetch();
-        $this->assertRegExp('&Fixing taxon one .* count to 1\n&', $output);
-        $this->assertRegExp('&Fixing taxon two .* count to 1\n&', $output);
-        $this->assertContains('Done', $output);
+        $taxon = $this->dm->find(null, '/test/taxons/one');
+        $this->assertNotNull($taxon);
+        $this->assertEquals(1, $taxon->getReferrerCount());
+        $taxon = $this->dm->find(null, '/test/taxons/two');
+        $this->assertNotNull($taxon);
+        $this->assertEquals(1, $taxon->getReferrerCount());
     }
 }
