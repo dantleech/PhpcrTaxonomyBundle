@@ -21,9 +21,9 @@
         "jms/metadata": "~1.5"
     },
     "require-dev": {
-        "symfony-cmf/routing-bundle": "1.1.*",
-        "symfony-cmf/testing": "1.1.*",
-        "symfony/monolog-bundle": "2.2.*"
+        "symfony-cmf/routing-bundle": "~1.1",
+        "symfony-cmf/testing": "~1.1",
+        "symfony/monolog-bundle": "~2.2"
     },
     "minimum-stability": "dev",
     "autoload":{
